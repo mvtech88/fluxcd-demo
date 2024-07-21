@@ -1,0 +1,24 @@
+apiVersion: helm.toolkit.fluxcd.io/v2beta1
+kind: HelmRelease
+metadata:
+  name: nginx-ingress
+  namespace: flux-system
+spec:
+  chart:
+    spec:
+      chart: ingress-nginx 
+      sourceRef:
+        kind: HelmRepository
+        name: helmrepo-nginxingress 
+      version: 4.0.18
+  install: 
+    disableWait: true
+  interval: 30s
+  releaseName: ingress-nginx
+  targetNamespace: ingress-nginx
+  upgrade:
+    remediation:
+      remediateLastFailure: true
+  valuesFrom:
+    - kind: ConfigMap
+      name: my-ingressnginx
