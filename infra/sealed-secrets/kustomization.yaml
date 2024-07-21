@@ -1,0 +1,4 @@
+kind: Kustomization
+namespace: flux-system
+resources:
+  - helm_release.yaml
