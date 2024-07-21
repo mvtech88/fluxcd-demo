@@ -238,7 +238,7 @@ controller:
     - kubernetes:1.31.3
     - workflow-aggregator:2.6
     - git:5.2.0
-    - configuration-as-code:1414.v878271fc496f
+    - configuration-as-code:1647.ve39ca_b_829b_42
     - blueocean:1.25.8
 
   # Set to false to download the minimum required version of all dependencies.
