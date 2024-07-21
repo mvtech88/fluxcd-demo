@@ -4,6 +4,8 @@ metadata:
   name: nginx-ingress
   namespace: flux-system
 spec:
+  dependsOn:
+  - metallb 
   interval: 10m0s
   path: ./infra/ingress
   prune: true
