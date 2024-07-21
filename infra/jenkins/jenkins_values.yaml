@@ -395,7 +395,6 @@ controller:
   installPlugins:
     - kubernetes:4253.v7700d91739e5
     - workflow-aggregator:600.vb_57cdd26fdd7
-    - blueocean:1.27.14
     - git:5.2.2
     - configuration-as-code:1836.vccda_4a_122a_a_e
 
@@ -404,10 +403,11 @@ controller:
   installLatestPlugins: true
 
   # -- Set to true to download the latest version of any plugin that is requested to have the latest version
-  installLatestSpecifiedPlugins: false
+  installLatestSpecifiedPlugins: true
 
   # -- List of plugins to install in addition to those listed in controller.installPlugins
-  additionalPlugins: []
+  additionalPlugins: 
+    - blueocean:1.27.1
 
   # Without this; whenever the controller gets restarted (Evicted, etc.) it will fetch plugin updates that have the potential to cause breakage.
   # Note that for this to work, `persistence.enabled` needs to be set to `true`
