@@ -408,6 +408,7 @@ controller:
   # -- List of plugins to install in addition to those listed in controller.installPlugins
   additionalPlugins: 
     - blueocean:1.27.14
+    - token-macro:400.v35420b_922dcb_
 
   # Without this; whenever the controller gets restarted (Evicted, etc.) it will fetch plugin updates that have the potential to cause breakage.
   # Note that for this to work, `persistence.enabled` needs to be set to `true`
