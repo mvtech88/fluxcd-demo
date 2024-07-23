@@ -5,7 +5,7 @@ metadata:
   namespace: flux-system
 spec:
   dependsOn:
-  - metallb 
+  - name:  metallb 
   interval: 10m0s
   path: ./infra/ingress
   prune: true
