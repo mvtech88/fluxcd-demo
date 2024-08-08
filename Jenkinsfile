@@ -49,12 +49,14 @@ spec:
     stages {
 
         stage('Checkout Code') {
+           when { changeset "CI/*"}
             steps {
               checkout scm
             }
         }
 
         stage('Build with Kaniko') {
+          when { changeset "CI/*"} 
           steps {
             container(name: 'kaniko', shell: '/busybox/sh') {
               withEnv(['PATH+EXTRA=/busybox']) {
