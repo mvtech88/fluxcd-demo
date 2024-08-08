@@ -49,7 +49,6 @@ spec:
     stages {
 
         stage('Checkout Code') {
-           when { changeset "CI/*"}
             steps {
               checkout scm
             }
