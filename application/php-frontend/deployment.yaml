@@ -20,7 +20,7 @@ spec:
     spec:
       containers:
       - name: php-fpm
-        image: docker.io/mohitverma1688/php-app:main-ca05c2bb-1723100749
+        image: docker.io/mohitverma1688/php-app:php-app:main-013b2aad-1723111685
         ports:
         - containerPort: 9000
           name: http
