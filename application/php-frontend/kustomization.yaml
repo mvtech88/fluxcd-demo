@@ -9,4 +9,3 @@ resources:
   - configmap.yaml
   - namespace.yaml
   - secret.yaml
-  - dock-pub.yaml
