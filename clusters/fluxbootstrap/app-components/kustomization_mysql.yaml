@@ -3,7 +3,9 @@ kind: Kustomization
 metadata:
   name: mysql-backend
   namespace: flux-system
-spec:
+spec: 
+  dependsOn:
+  - name: nginx-ingress 
   interval: 10m0s
   path: ./application/mysql-backend
   prune: true

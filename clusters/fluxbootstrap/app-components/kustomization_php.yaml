@@ -4,6 +4,8 @@ metadata:
   name: php-frontend
   namespace: flux-system
 spec:
+  dependsOn:
+  - name: mysql-backend 
   interval: 3m0s
   sourceRef:
     kind: GitRepository
