@@ -1,8 +1,0 @@
-apiVersion: source.toolkit.fluxcd.io/v1beta1
-kind: HelmRepository
-metadata:
-  name: helmrepo-private
-  namespace: flux-system
-spec:
-  interval: 1h0m0s
-  url: https://raw.githubusercontent.com/Mohit-Verma-1688/helm_repo/master/
