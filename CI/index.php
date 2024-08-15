@@ -27,7 +27,7 @@
   <blockquote>
     <p      </p>
     <p      </p>
-    <p class="lead">!! FLUX CD DEPLOYED THIS DEMO CRUD APP VERSION 3 !!</p>
+    <p class="lead">!! FLUX CD DEPLOYED THIS DEMO CRUD APP VERSION 4 !!</p>
   </blockquote>
   
 
