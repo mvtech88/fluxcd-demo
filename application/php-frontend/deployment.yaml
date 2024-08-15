@@ -20,7 +20,7 @@ spec:
     spec:
       containers:
       - name: php-fpm
-        image: docker.io/mohitverma1688/php-app:main-3255af70-1723132302 #  {"$imagepolicy": "flux-system:demowebapp"}
+        image: docker.io/mohitverma1688/php-app:main-e9c3cd68-1723729530 #  {"$imagepolicy": "flux-system:demowebapp"}
         ports:
         - containerPort: 9000
           name: http
