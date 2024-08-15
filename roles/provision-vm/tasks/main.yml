@@ -1,0 +1,8 @@
+
+
+- name: provision the VM with ansible
+  include_tasks: playbook.yml
+  tags: 
+    - provision
+    - flux-bootstrap
+

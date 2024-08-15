@@ -1,0 +1,8 @@
+[{{ VM_NAME }}]
+{{ IPv4 }}
+ 
+ 
+[{{ VM_NAME }}:vars]
+ansible_ssh_user=vmadmin
+ansible_ssh_private_key_file=/Users/mohitverma/Documents/WR-Backup/STUDY-Mac/gitops/roles/install-vm/tasks/user_key
+ansible_ssh_common_args='-o StrictHostKeyChecking=no' 

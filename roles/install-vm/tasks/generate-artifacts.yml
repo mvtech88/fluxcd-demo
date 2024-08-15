@@ -1,0 +1,35 @@
+---
+# Creates runtime artifacts to provision the VM. 
+- name: Create hostsfile file 
+  tags: install
+  template:
+    src: hosts.j2
+    dest: hosts
+  delegate_to: localhost
+
+- name: Create playbook.yml  file
+  tags: install
+  template:
+    src: playbook.j2
+    dest: ./roles/provision-vm/tasks/playbook.yml
+  delegate_to: localhost
+
+- name: Create openssl  file
+  tags: install
+  template:
+    src: openssl.j2
+    dest: ./roles/provision-vm/tasks/docker-reg/openssl.conf
+  delegate_to: localhost
+
+- name: Create kind. yaml  file
+  tags: install
+  template:
+    src: kind.j2
+    dest: ./roles/provision-vm/tasks/kind.yaml
+  delegate_to: localhost
+
+- name: Generate new cert 
+  tags: install
+  shell: |
+    cd ./roles/provision-vm/tasks/docker-reg 
+    openssl req -x509 -newkey rsa:4096 -days 365 -config openssl.conf -keyout certs/domain.key -out certs/domain.crt 

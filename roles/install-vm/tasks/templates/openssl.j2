@@ -1,0 +1,20 @@
+[ req ]
+distinguished_name = req_distinguished_name
+x509_extensions     = req_ext
+default_md         = sha256
+prompt             = no
+encrypt_key        = no
+
+[ req_distinguished_name ]
+countryName            = "GR"
+localityName           = "Mainz"
+organizationName       = "DT"
+organizationalUnitName = "private"
+commonName             = "myregistry.com"
+emailAddress           = "test@example.com"
+
+[ req_ext ]
+subjectAltName = "IP:{{ IPv4 }}"
+
+[alt_names]
+DNS = "{{ IPv4 }}"

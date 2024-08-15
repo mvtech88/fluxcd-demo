@@ -1,0 +1,277 @@
+---
+- name: Update apt repo and cache on all Debian/Ubuntu boxes
+  apt: update_cache=yes force_apt_get=yes cache_valid_time=3600
+  tags: provision
+
+- name: Upgrade all packages on servers
+  apt: upgrade=dist force_apt_get=yes
+  tags: provision
+
+- name: Check if a reboot is needed on all servers
+  tags: provision
+  register: reboot_required_file
+  stat: path=/var/run/reboot-required get_checksum=no
+
+- name: Reboot the box if kernel updated
+  tags: provision
+  reboot:
+      msg: "Reboot initiated by Ansible for kernel updates"
+      connect_timeout: 5
+      reboot_timeout: 300
+      pre_reboot_delay: 0
+      post_reboot_delay: 30
+      test_command: uptime
+  when: reboot_required_file.stat.exists
+
+- name: Install aptitude using apt
+  tags: provision
+  apt: name=aptitude state=latest update_cache=yes force_apt_get=yes
+
+- name: install the packages
+  tags: provision
+  apt:
+   name: {% raw %}"{{ item }}"
+   state: latest
+   update_cache: yes
+  loop:
+   - apt-transport-https
+   - ca-certificates
+   - wget
+   - cloud-utils
+   - curl
+   - software-properties-common
+   - python3-pip
+   - virtualenv
+   - python3-setuptools
+   - git
+   - w3m
+   - acl{% endraw %}
+
+
+- name: Allow everything and enable UFW
+  tags: provision
+  ufw:
+   state: enabled
+   policy: allow
+- name: Add Docker GPG apt Key
+  tags: provision
+  apt_key:
+    url: https://download.docker.com/linux/ubuntu/gpg
+    state: present
+- name: Add Docker Repository
+  tags: provision
+  apt_repository:
+   repo: deb https://download.docker.com/linux/ubuntu bionic stable
+   state: present
+- name: Update apt and install docker-ce
+  tags: provision
+  apt: update_cache=yes name=docker-ce state=latest
+- name: Install Docker Module for Python
+  tags: provision
+  pip:
+      name: docker
+- name: Start Docker service
+  tags: provision
+  service:
+      name: docker
+      state: started
+      enabled: yes
+- name: Add user vmadmin to docker group
+  tags: provision
+  user:
+     name: vmadmin
+     groups: docker
+     append: yes
+- name: setfacl for the user
+  tags: provision
+  shell: |
+    sudo setfacl --modify user:vmadmin:rw /var/run/docker.sock
+- name: Install "kubectl" with option --classic
+  tags: provision
+  snap:
+    name: kubectl
+    classic: yes
+
+- name: checking for helm installation
+  tags: provision
+  stat:
+   path: /bin/helm
+  register: helm_check
+- name: install helm in the cluster
+  tags: provision
+  shell: |
+    sudo wget https://get.helm.sh/helm-v3.10.2-linux-arm64.tar.gz
+    sudo tar -zxvf helm-v3.10.2-linux-arm64.tar.gz
+    sudo mv  ./linux-arm64/helm /bin
+  when: not helm_check.stat.exists
+- name: check for the helm-repo
+  tags: provision
+  become_user: vmadmin
+  command: helm repo list
+  register: helmrepo
+  ignore_errors: True
+- name: add the helm repo
+  tags: provision
+  become_user: vmadmin
+  command: {% raw %}"{{ item }}"{% endraw %}
+
+  with_items:
+   - helm repo add helmrepo-private https://raw.githubusercontent.com/Mohit-Verma-1688/helm_repo/master/
+   - helm repo add stable https://charts.helm.sh/stable
+   - helm repo add ingress-nginx https://kubernetes.github.io/ingress-nginx
+   - helm repo add jenkinsci https://charts.jenkins.io
+   - helm repo add bitnami https://charts.bitnami.com/bitnami
+  ignore_errors: True
+  when: "helmrepo.rc != 0" 
+
+- name: Creates directory
+  tags: provision
+  file:
+   path: /home/vmadmin/kind/
+   owner: vmadmin
+   mode: 0755
+   state: directory
+
+- name: Copying a kind file to directory
+  tags: provision
+  copy:
+   src: ./kind.yaml
+   dest: /home/vmadmin/kind
+
+- name: installing KIND for Ubuntu
+  tags: provision
+  shell: |
+    cd /home/vmadmin/kind/
+    sudo curl -Lo ./kind https://github.com/kubernetes-sigs/kind/releases/download/v0.17.0/kind-linux-arm64
+    sudo chmod +x ./kind
+    sudo mv ./kind /bin/kind
+
+- name: check cluster if present
+  tags: provision
+  shell: |
+   kind get clusters
+  register: kind_output
+
+- name: delete cluster if present
+  tags: provision
+  become_user: vmadmin
+  become: true
+  shell: |
+   kind delete cluster --name k8s-cluster
+  when: kind_output.stdout == "k8s-cluster"
+
+- name: install the cluster using kind
+  tags: provision
+  become_user: vmadmin
+  become: true
+  shell: |
+    kind create cluster --name k8s-cluster --config /home/vmadmin/kind/kind.yaml
+
+- name: Copying the docker reg Directory and its contents
+  tags: provision
+  become: true
+  copy:
+      src: ./docker-reg
+      dest: /home/vmadmin/docker-registry
+      owner: vmadmin
+      group: vmadmin
+      mode: 0755
+
+- name: check for docker-compose if already installed
+  tags: provision
+  stat:
+   path: "/usr/local/bin/docker-compose"
+  register: dc_com
+
+- name: install docker-compose in the cluster
+  tags: provision
+  shell: |
+    sudo curl -L "https://github.com/docker/compose/releases/download/v2.12.2/docker-compose-linux-aarch64" -o /usr/local/bin/docker-compose
+    sudo chmod +x /usr/local/bin/docker-compose
+  when: not dc_com.stat.exists
+
+- name: deploy Docker registry using docker compose
+  tags: provision
+  command: "docker-compose  up -d"
+  args:
+   chdir: /home/vmadmin/docker-registry/docker-reg
+
+- name: Creates directory
+  tags: provision
+  file:
+   path: /etc/docker/certs.d/{{ IPv4 }}:5000
+   state: directory
+
+- name: copy domain.crt to remote path and other taks
+  tags: provision
+  command: {% raw %}"{{ item }}"{% endraw %}
+  
+  with_items:
+  - cp /home/vmadmin/docker-registry/docker-reg/certs/domain.crt  /etc/docker/certs.d/{{ IPv4 }}:5000
+
+
+- name: install k8s mandatory steps
+  tags: provision
+  become_user: vmadmin
+  command: {% raw %}"{{ item }}"{% endraw %}
+
+  with_items:
+   - kubectl create ns ingress-nginx
+   - kubectl create ns jenkins
+   - kubectl create ns sealed-secrets
+   - kubectl create ns demo-webapp
+   - kubectl taint node k8s-cluster-control-plane node-role.kubernetes.io/control-plane:NoSchedule-
+   - kubectl -n jenkins create secret docker-registry docker-credentials --docker-username=mohitverma1688 --docker-password={{ docker_reg }} --docker-email=mohitverma160288@gmail.com
+   - kubectl -n demo-webapp create secret docker-registry dockcred --docker-username=mohitverma1688 --docker-password={{ docker_reg }} --docker-email=mohitverma160288@gmail.com
+   
+  ignore_errors: True
+
+
+- name: checking for kubeseal installation
+  tags: provision
+  stat:
+    path: /bin/kubeseal
+  register: kubeseal_check
+
+- name: install kubeseal in the cluster
+  tags: provision
+  shell: |
+     sudo wget https://github.com/bitnami-labs/sealed-secrets/releases/download/v0.23.1/kubeseal-0.23.1-linux-arm64.tar.gz --no-check-certificate
+     sudo tar xvfz kubeseal-0.23.1-linux-arm64.tar.gz
+     sudo mv  ./kubeseal /bin
+  when: not kubeseal_check.stat.exists
+
+- name: checking for flux installation
+  tags: flux-bootstrap
+  stat:
+   path: /usr/local/bin/flux
+  register: flux_check
+
+- name: install the flux
+  tags: flux-bootstrap
+  shell: |
+   sudo curl -s https://fluxcd.io/install.sh | sudo bash
+  when: not flux_check.stat.exists
+
+- name: check if the flux is bootstraped
+  tags: flux-bootstrap
+  become_user: vmadmin
+  command: flux reconcile source git flux-system
+  register: flux
+  ignore_errors: True
+
+- name: bootstrap  the flux
+  tags: flux-bootstrap
+  become_user: vmadmin
+  environment:
+   GITHUB_TOKEN: {{ github_token }}
+  shell: "flux bootstrap github --components-extra=image-reflector-controller,image-automation-controller  --owner=mvtech88 --token-auth=true --repository=fluxcd-demo  --path=clusters/fluxbootstrap  --personal"
+  when: "flux.rc !=0 "
+
+- name: create the flux secret to access docker registry
+  tags: flux-bootstrap
+  become_user: vmadmin
+  command: {% raw %}"{{ item }}"{% endraw %}
+  
+  with_items:
+  - kubectl -n flux-system create secret docker-registry docker-credentials --docker-username=mohitverma1688 --docker-password={{ docker_reg }} --docker-email=mohitverma160288@gmail.com 
